@@ -1,0 +1,19 @@
+diff --git a/rllm-model-gateway/src/rllm_model_gateway/server.py b/rllm-model-gateway/src/rllm_model_gateway/server.py
+index 826d9722..4a22afab 100644
+--- a/rllm-model-gateway/src/rllm_model_gateway/server.py
++++ b/rllm-model-gateway/src/rllm_model_gateway/server.py
+@@ -173,7 +173,13 @@ def create_app(
+         # serving from a path, set renderer_family explicitly. Supported families /
+         # MODEL_RENDERER_MAP:
+         #   https://github.com/PrimeIntellect-ai/renderers/blob/main/renderers/base.py
+-        renderer = create_renderer(tokenizer, renderer=config.renderer_family)
++        try:  # renderers>=0.1.8 takes a typed config instead of renderer=<name>
++            from renderers.configs import config_from_name
++
++            family = config.renderer_family
++            renderer = create_renderer(tokenizer, None if family in (None, "auto") else config_from_name(family))
++        except ImportError:
++            renderer = create_renderer(tokenizer, renderer=config.renderer_family)
+         logger.info(
+             "Built %s (family=%r) from %s for cumulative token mode",
+             type(renderer).__name__,
